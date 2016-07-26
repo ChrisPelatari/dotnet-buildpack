@@ -39,7 +39,7 @@ mkdir -p ${CACHE_DIR}
 
 curl -sSL -o dotnet.tar.gz https://go.microsoft.com/fwlink/?LinkID=809130
 
-tar zxf dotnet.tar.gz -C ${SRC_DIR}/dotnet
+tar zxf dotnet.tar.gz 
 
 
 # TODO: This test doesn't seen to actually work
