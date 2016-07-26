@@ -34,12 +34,6 @@ else
 	DNU_FLAGS="--quiet"
 fi
 
-if [ -n "$UNSTABLE_TOOLCHAIN" ]; then
-	DNVM_FLAGS="-u"
-else
-	DNVM_FLAGS=""
-fi
-
 SRC_DIR=`mktemp -d`
 # Move the app source code into temporary src dir using subshell to not leak shopt
 (
@@ -76,7 +70,6 @@ fi
 # Add DNX to the build output
 DNX_BUILD_LOCATION=${BUILD_DIR}/.dnx/runtimes/
 mkdir -p ${DNX_BUILD_LOCATION}
-cp -r ~/.dnx/runtimes/`dnvm alias default` ${DNX_BUILD_LOCATION}
 
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -n "$PROJECT" ]; then
