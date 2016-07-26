@@ -35,7 +35,7 @@ mkdir -p ${CACHE_DIR}
 #apt-get update
 
 #install with apt-get
-apt-get install dotnet-dev-1.0.0-preview2-003121
+#apt-get install dotnet-dev-1.0.0-preview2-003121
 
 # TODO: This test doesn't seen to actually work
 # TODO: Maybe just run `npm install -g` and if anything is missing, install it after
