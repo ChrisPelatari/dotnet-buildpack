@@ -18,22 +18,6 @@ source $BUILDPACK_DIR/bin/util
 
 export_env_dir ${ENV_DIR}
 
-: ${MONO_VERSION:="4.0.1.44"}
-: ${MONO_DOWNLOAD_LOCATION:="https://github.com/friism/mono-builder/releases/download/v${MONO_VERSION}/mono-${MONO_VERSION}.tar.gz"}
-: ${LIBUV_VERSION:="1.6.0"}
-: ${NODE_VERSION:="0.12.2"}
-: ${DNX_VERSION:="latest"}
-
-# REMARK: https://github.com/aspnet/dnx/pull/2620 and https://github.com/aspnet/aspnet-docker/issues/80
-[ -z "$MONO_THREADS_PER_CPU" ] && export MONO_THREADS_PER_CPU=50
-
-if [ -n "$BUILD_DEBUG" ]; then
-	DNU_FLAGS=""
-	echo "DNX_VERSION: ${DNX_VERSION}"
-else
-	DNU_FLAGS="--quiet"
-fi
-
 SRC_DIR=`mktemp -d`
 # Move the app source code into temporary src dir using subshell to not leak shopt
 (
@@ -43,17 +27,15 @@ SRC_DIR=`mktemp -d`
 
 mkdir -p ${CACHE_DIR}
 
-echo "installing ${MONO_DOWNLOAD_LOCATION}"
-# TODO: use s4cmd
-curl ${MONO_DOWNLOAD_LOCATION} -Ls | tar xz -C ${BUILD_DIR}
-# Mono expects to be running out of /app
-ln -s ${BUILD_DIR}/mono /app
+#update apt repo...
+sudo sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ trusty main" > /etc/apt/sources.list.d/dotnetdev.list'
 
-export PATH="/app/mono/bin:${PATH}"
-export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
+sudo apt-key adv --keyserver apt-mo.trafficmanager.net --recv-keys 417A0893
 
-mozroots --import --sync --quiet
-cp -r ~/.config ${BUILD_DIR}/.
+sudo apt-get update
+
+#install with apt-get
+sudo apt-get install dotnet-dev-1.0.0-preview2-003121
 
 # TODO: This test doesn't seen to actually work
 # TODO: Maybe just run `npm install -g` and if anything is missing, install it after
@@ -67,9 +49,6 @@ then
 	npm install -g grunt-cli bower gulp
 fi
 
-# Add DNX to the build output
-DNX_BUILD_LOCATION=${BUILD_DIR}/.dnx/runtimes/
-mkdir -p ${DNX_BUILD_LOCATION}
 
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -n "$PROJECT" ]; then
@@ -85,18 +64,9 @@ else
 fi
 echo "Building ${PROJECT_JSON_FILE}"
 
-export DNU_LOCAL_CACHE="/app/.local/share/dnu"
-export DNU_CACHE_LOCATION="${CACHE_DIR}/dnu/cache"
-mkdir -p ${DNU_LOCAL_CACHE}
-mkdir -p ${DNU_CACHE_LOCATION}
-ln -s ${DNU_CACHE_LOCATION} ${DNU_LOCAL_CACHE}/cache
+dotnet restore ${PROJECT_JSON_FILE}
 
-dotnet restore $DNU_FLAGS ${PROJECT_JSON_FILE}
-
-dotnet publish --out ${BUILD_DIR} $DNU_FLAGS --no-source --configuration Release ${PROJECT_JSON_FILE}
-
-# Clean out core-stuff that we don't need in the slug
-find ${BUILD_DIR} -iname dnxcore50 -print0 | xargs -r -0 rm --
+dotnet publish --out ${BUILD_DIR} --no-source --configuration Release ${PROJECT_JSON_FILE}
 
 mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${BUILDPACK_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
