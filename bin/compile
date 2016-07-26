@@ -39,9 +39,8 @@ mkdir -p ${CACHE_DIR}
 
 curl -sSL -o dotnet.tar.gz https://go.microsoft.com/fwlink/?LinkID=809130
 
-mkdir -p /opt/dotnet && sudo tar zxf dotnet.tar.gz -C /opt/dotnet
+tar zxf dotnet.tar.gz -C /opt/dotnet
 
-ln -s /opt/dotnet/dotnet /usr/local/bin
 
 # TODO: This test doesn't seen to actually work
 # TODO: Maybe just run `npm install -g` and if anything is missing, install it after
